@@ -1,0 +1,11 @@
+test_*.py
+Hello*
+test_*
+*.png
+*.mp4
+*.xml
+*.pkl
+*.faiss
+*.json
+.history
+.vscode
