@@ -7,9 +7,9 @@ import MNN
 import faiss
 import cv2
 from typing import Union, List, Optional
-import torchvision.transforms as T
+# import torchvision.transforms as T
 from MNN import nn, expr
-import gc
+# import gc
 import time
 from typing import Literal
 import math
