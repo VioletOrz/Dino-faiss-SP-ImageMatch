@@ -828,6 +828,7 @@ def generate_faiss_index_and_sp_features(
         nlist = kwargs.get('nlist', 64)
         nprobe = kwargs.get('nprobe', 16)
         build_dino_faiss_ivfsq8(image_folder, dino, save_prefix=dino_prefix, nlist=nlist, nprobe=nprobe, dino_save_features = dino_save_features)
+
     build_superpoint_features(image_folder, extractor, resize_size=sp_size, save_prefix=glue_prefix)
 
 
@@ -926,17 +927,17 @@ def capture_center_169_once(save_dir="captures") -> str:
 
 if __name__ == "__main__":
 
-    image_folder = "hwkfg3_frames"
+    image_folder = "hwkfg3_frames" # 图像数据文件夹，仅Build索引时使用
 
-    data_dir = 'data'
-    data_name = "hwkfg3_nms"
-    sp_size = 512
-    stop_mode = 'first'# "first" "end"
-    dino_topk = 5
-    dino_threshold = 0.7
-    relative_1024_min_matches = 200
-    relative_1024_score_threshold = 0.8
-    faiss_type = 'ivfsq8' # None / hnsw / ivfhnsw
+    data_dir = 'data' # 数据文件保存路径
+    data_name = "hwkfg3_nms" # 数据集名前缀
+    sp_size = 512 # superpoint特征提取截断尺寸
+    stop_mode = 'first'# "first" "end" # 验证匹配停止模式，first: 验证到第一个匹配的对象返回，end: 验证完所有的匹配对象
+    dino_topk = 5 # dino检索topk数量
+    dino_threshold = 0.7 # dino检索得分阈值
+    relative_1024_min_matches = 200 # 1024尺寸下的sp最低匹配数量
+    relative_1024_score_threshold = 0.8 # 1024尺寸下sp最低匹配得分阈值
+    faiss_type = 'ivfsq8' # Literal[None, "ivf", "ivfpq", 'ivfsq8'] faiss索引类型
 
     build = False
     danmu = True
@@ -945,13 +946,13 @@ if __name__ == "__main__":
     extractor_model_path = "model/superpoint.mnn"
     lightglue_model_path = "model/superpoint_lightglue.trt.mnn"
 
-    dino_save_features_path = f".pkl"
+    # dino_save_features_path = f".pkl"
     dino_save_features = True # 'dino_mnn_1e6_n_cn_features.pkl' # None / path to load / True to save to default path
 
     nlist = 32 # ivf
     m = 32 # 32 # hnsw
-    efConstruction = 80 # 200 # hnsw
-    efSearch = 32 # 64 # hnsw
+    # efConstruction = 80 # 200 # hnsw
+    # efSearch = 32 # 64 # hnsw
     nprobe = 16 # 16 # ivf
     nbits = 4 # ivf
 
@@ -968,8 +969,8 @@ if __name__ == "__main__":
             nlist = nlist,
             M = m,    
             nbits = nbits, 
-            efConstruction = efConstruction,
-            efSearch = efSearch, 
+            # efConstruction = efConstruction,
+            # efSearch = efSearch, 
             nprobe = nprobe,
         )
 
