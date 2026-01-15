@@ -89,9 +89,9 @@ def read_image(path: str, grayscale: bool = False) -> np.ndarray:
     if not grayscale:
         image = image[..., ::-1]
 
-    if np.all(image == 0):
-        image = image.astype(np.float32) + 1e-8
-        
+    # if np.all(image == 0):
+    #     image = image.astype(np.float32) + 1e-8
+
     return image
 
 
@@ -610,6 +610,9 @@ def extract_superpoint_feature_mnn(img_path, extractor, resize_size=512, type_in
 
     image, _ = load_image(img_path, resize = resize_size, grayscale=True)
 
+    if np.all(image == 0):
+        return None
+    
     x = expr.const(image, image.shape, expr.NCHW, expr.float)
 
     feats = extractor.forward([x])
@@ -931,7 +934,7 @@ def capture_center_169_once(save_dir="captures") -> str:
 
 if __name__ == "__main__":
 
-    image_folder = "hwkfg3_frames" # 图像数据文件夹，仅Build索引时使用
+    image_folder = "hwkfg3_24" # 图像数据文件夹，仅Build索引时使用
 
     data_dir = 'data' # 数据文件保存路径
     data_name = "hwkfg3_nms" # 数据集名前缀
@@ -943,7 +946,7 @@ if __name__ == "__main__":
     relative_1024_score_threshold = 0.8 # 1024尺寸下sp最低匹配得分阈值
     faiss_type = 'ivfsq8' # Literal[None, "ivf", "ivfpq", 'ivfsq8'] faiss索引类型
 
-    build = False
+    build = True
 
     dino_model_path = "model/dinov2_vits14.mnn"
     extractor_model_path = "model/superpoint.mnn"
