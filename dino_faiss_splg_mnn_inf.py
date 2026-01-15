@@ -619,6 +619,7 @@ def extract_superpoint_feature_mnn(img_path, extractor, resize_size=512, type_in
 
     kpts, scores, desc = [f.read() for f in feats]
     kpts, scores, desc = process_superpoint_output(kpts, scores, desc, score_thresh=0.1, topk=256)
+    if kpts.shape[1] == 0: return None
     # type_int8 = True
     if type_int8:
         kpts_uint8, kpts_scale = quantize_uint8_global(kpts)
