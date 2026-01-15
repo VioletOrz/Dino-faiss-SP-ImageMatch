@@ -88,6 +88,10 @@ def read_image(path: str, grayscale: bool = False) -> np.ndarray:
         raise IOError(f"Could not read image at {path}.")
     if not grayscale:
         image = image[..., ::-1]
+
+    if np.all(image == 0):
+        image = image.astype(np.float32) + 1e-8
+        
     return image
 
 
@@ -652,7 +656,7 @@ def build_superpoint_features(image_dir, extractor, resize_size=512, save_prefix
     with open(f"{save_prefix}_paths.pkl", "wb") as f:
         pickle.dump(paths, f)
 
-        # 按paths顺序分组保存features
+    # 按paths顺序分组保存features
     total = len(paths)
     chunk_size = 1000
     num_chunks = math.ceil(total / chunk_size)
@@ -931,7 +935,7 @@ if __name__ == "__main__":
 
     data_dir = 'data' # 数据文件保存路径
     data_name = "hwkfg3_nms" # 数据集名前缀
-    sp_size = 512 # superpoint特征提取截断尺寸
+    sp_size = 512 # superpoint特征提取截图像resize尺寸
     stop_mode = 'first'# "first" "end" # 验证匹配停止模式，first: 验证到第一个匹配的对象返回，end: 验证完所有的匹配对象
     dino_topk = 5 # dino检索topk数量
     dino_threshold = 0.7 # dino检索得分阈值
@@ -940,7 +944,6 @@ if __name__ == "__main__":
     faiss_type = 'ivfsq8' # Literal[None, "ivf", "ivfpq", 'ivfsq8'] faiss索引类型
 
     build = False
-    danmu = True
 
     dino_model_path = "model/dinov2_vits14.mnn"
     extractor_model_path = "model/superpoint.mnn"
@@ -1012,7 +1015,6 @@ if __name__ == "__main__":
             glue_paths = glue_paths,
             indxl=indx_st,
             glue_features = glue_features,
-            # glue_features = glue_features,
             sp_size = sp_size,
             stop_mode = stop_mode,
             dino_topk = dino_topk,
