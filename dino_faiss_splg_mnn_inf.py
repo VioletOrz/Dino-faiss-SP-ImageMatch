@@ -1,19 +1,19 @@
 import os
 import time
-import pickle
 import numpy as np
 from PIL import Image
 import MNN
 import faiss
 import cv2
+import multiprocessing, pickle
 from typing import Union, List, Optional
 # import torchvision.transforms as T
 from MNN import nn, expr
 # import gc
-import time
 from typing import Literal
 import math
-
+from pathlib import Path
+import pyautogui
 ########################################################
 # --- 加载模型 ---
 ########################################################
@@ -72,14 +72,12 @@ def transform_dino_pil(img_path,):
     img = (img - mean) / std
     return img
 
-
 def normalize_keypoints(kpts: np.ndarray, h: int, w: int) -> np.ndarray:
     size = np.array([w, h])
     shift = size / 2
     scale = size.max() / 2
     kpts = (kpts - shift) / scale
     return kpts.astype(np.float32)
-
 
 def read_image(path: str, grayscale: bool = False) -> np.ndarray:
     mode = cv2.IMREAD_GRAYSCALE if grayscale else cv2.IMREAD_COLOR
@@ -93,7 +91,6 @@ def read_image(path: str, grayscale: bool = False) -> np.ndarray:
     #     image = image.astype(np.float32) + 1e-8
 
     return image
-
 
 def resize_image(image: np.ndarray, size: Union[List[int], int], fn: str, interp: Optional[str] = "area"):
     h, w = image.shape[:2]
@@ -115,7 +112,6 @@ def resize_image(image: np.ndarray, size: Union[List[int], int], fn: str, interp
     }[interp]
     return cv2.resize(image, (w_new, h_new), interpolation=mode), scale
 
-
 def normalize_image(image: np.ndarray) -> np.ndarray:
     if image.ndim == 3:
         image = image.transpose((2, 0, 1))
@@ -124,7 +120,6 @@ def normalize_image(image: np.ndarray) -> np.ndarray:
     else:
         raise ValueError(f"Not an image: {image.shape}")
     return image / 255.0
-
 
 def load_image(path: str, grayscale=False, resize=None, fn="max", interp="area"):
     img = read_image(path, grayscale)
@@ -148,6 +143,7 @@ def extract_dino_feature_mnn(img_path, dino_interpreter, dino_session, dino_inpu
     feat = feat.reshape(-1)
     feat = feat / np.linalg.norm(feat, keepdims=True)
     return feat.astype(np.float32)
+
 def build_dino_faiss(image_dir, dino_model, save_prefix="dino" , dino_save_features = None):
 
     features, paths = [], []
@@ -597,14 +593,12 @@ def dequantize_uint8_global(x_uint8, scale):
 def dequantize_int8_global(x_int8, scale):
     return x_int8.astype(np.float32) * scale
 
-
 def dequantize_int8(x_int8, scale):
     if scale.ndim == 1:  # (T,)
         scale = scale.reshape(1, -1, 1)
     elif scale.ndim == 2:  # (B, T)
         scale = scale[..., None]
     return x_int8.astype(np.float32) * scale
-
 
 def extract_superpoint_feature_mnn(img_path, extractor, resize_size=512, type_int8=True):
 
@@ -674,8 +668,6 @@ def build_superpoint_features(image_dir, extractor, resize_size=512, save_prefix
         print(f"[SP-MNN] ✅ {part_name} ({start}~{end-1}) 共 {len(part_dict)} 条")
 
     print(f"[SP-MNN] Done, {len(paths)} features extracted.")
-
-import multiprocessing, pickle, os
 
 def save_worker(save_path, feats_dict):
     with open(save_path, "wb") as f:
@@ -758,7 +750,6 @@ def glue_match_features(feats0, feats1, lightglue, min_matches=600, score_thresh
         same = True
     return same, n_matches, mean_score
 
-########################################################
 def list_images_by_depth(base_dir, depth=0, exts=(".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff")):
     """
     列出指定目录下的图像文件路径（返回相对路径）。
@@ -839,7 +830,6 @@ def generate_faiss_index_and_sp_features(
 
     build_superpoint_features(image_folder, extractor, resize_size=sp_size, save_prefix=glue_prefix)
 
-
 def search_image_sence(
         query_image, 
         dino,
@@ -867,7 +857,7 @@ def search_image_sence(
 
     # dino_index, dino_paths = load_dino_index(dino_prefix)
     # glue_paths, glue_features = load_glue_index(glue_prefix)
-
+   
     start_time = time.time()
     results = dino_search(query_image, dino_index, dino_paths, dino, topk=dino_topk)
     results = [r for r in results if r['score'] > dino_threshold]
@@ -904,12 +894,6 @@ def search_image_sence(
     else:
         print(f"❌ 验证失败")
         return False, match_name, indxl, glue_features, end_time - start_time
-    
-
-import pyautogui
-from PIL import Image
-import os
-import time
 
 def capture_center_169_once(save_dir="captures") -> str:
     """截取屏幕中心16:9区域并保存为720p PNG，返回文件路径"""
@@ -937,18 +921,22 @@ def capture_center_169_once(save_dir="captures") -> str:
 if __name__ == "__main__":
 
     image_folder = "hwkfg_24" # 图像数据文件夹，仅Build索引时使用
-
+    build = True
     data_dir = 'data' # 数据文件保存路径
     data_name = "hwkfg3_nms" # 数据集名前缀
+    ##########################################################################
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
     sp_size = 512 # superpoint特征提取截图像resize尺寸
     stop_mode = 'first'# "first" "end" # 验证匹配停止模式，first: 验证到第一个匹配的对象返回，end: 验证完所有的匹配对象
+
     dino_topk = 5 # dino检索topk数量
     dino_threshold = 0.7 # dino检索得分阈值
-    relative_1024_min_matches = 200 # 1024尺寸下的sp最低匹配数量
-    relative_1024_score_threshold = 0.8 # 1024尺寸下sp最低匹配得分阈值
     faiss_type = 'ivfsq8' # Literal[None, "ivf", "ivfpq", 'ivfsq8'] faiss索引类型
 
-    build = True
+    relative_1024_min_matches = 200 # 1024尺寸下的sp最低匹配数量
+    relative_1024_score_threshold = 0.8 # 1024尺寸下sp最低匹配得分阈值
 
     dino_model_path = "model/dinov2_vits14.mnn"
     extractor_model_path = "model/superpoint.mnn"
@@ -1007,7 +995,9 @@ if __name__ == "__main__":
         # p = list_images_by_depth(image_folder)
         # query_image = r"Hello World\2053.png"
         query_image = capture_center_169_once()
-
+        print("\n\n\n开始=======================================")
+        img_path = Path(query_image)
+        print(f"截图保存为 {img_path.as_posix()}")
 
         res, match_name, indx_st, glue_features, ttime = search_image_sence(
             query_image = query_image,
@@ -1034,7 +1024,7 @@ if __name__ == "__main__":
         print(f'平均时间：{stime/cnt:.2f}s')
 
         print(f'准确率：{true}/{cnt} = {true/cnt:.2%}')
-        # time.sleep(1)
+        time.sleep(1)
 
 
 # if __name__ == "__main__":
