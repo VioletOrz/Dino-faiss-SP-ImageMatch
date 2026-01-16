@@ -842,7 +842,6 @@ def generate_faiss_index_and_sp_features(
 
 def search_image_sence(
         query_image, 
-        data_name,
         dino,
         extractor,
         lightglue,
@@ -875,6 +874,7 @@ def search_image_sence(
 
     # ========== 验证匹配 ========== #
     query_feats = extract_superpoint_feature_mnn(query_image, extractor, resize_size=sp_size)
+    if query_feats == None: return False, None, indxl, end_time - start_time
     query_feats = convert_feature_to_ver(query_feats)
     true_count = 0
     match_name = None
@@ -1010,7 +1010,6 @@ if __name__ == "__main__":
 
         res, match_name, indx_st, glue_features, ttime = search_image_sence(
             query_image = query_image,
-            data_name = data_name,
             dino = dino,
             extractor = extractor,
             lightglue = lightglue,
