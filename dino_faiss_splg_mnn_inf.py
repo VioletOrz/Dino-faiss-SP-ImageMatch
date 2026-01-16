@@ -874,7 +874,7 @@ def search_image_sence(
 
     # ========== 验证匹配 ========== #
     query_feats = extract_superpoint_feature_mnn(query_image, extractor, resize_size=sp_size)
-    if query_feats == None: return False, None, indxl, end_time - start_time
+    if query_feats == None: return False, None, indxl, glue_features, time.time() - start_time
     query_feats = convert_feature_to_ver(query_feats)
     true_count = 0
     match_name = None
