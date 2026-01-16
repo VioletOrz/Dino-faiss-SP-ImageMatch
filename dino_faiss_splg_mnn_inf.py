@@ -882,6 +882,7 @@ def search_image_sence(
     # glue_features = load_glue_features(glue_prefix, indxl // 1000)
     for r in results:
         print(f"\n==== 验证 {r['path']} ====")
+        if r['path'] not in glue_paths: continue
         indx = glue_paths.index(r['path']) // 1000
         if indx != indxl:
             glue_features = load_glue_features(glue_prefix, indx)
@@ -935,7 +936,7 @@ def capture_center_169_once(save_dir="captures") -> str:
 
 if __name__ == "__main__":
 
-    image_folder = "hwkfg3_24" # 图像数据文件夹，仅Build索引时使用
+    image_folder = "hwkfg_24" # 图像数据文件夹，仅Build索引时使用
 
     data_dir = 'data' # 数据文件保存路径
     data_name = "hwkfg3_nms" # 数据集名前缀
